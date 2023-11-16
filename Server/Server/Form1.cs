@@ -142,9 +142,9 @@ namespace Server
             public int Index { get; set; }
             public int Width { get; set; }
             public int Height { get; set; }
-            public string Data { get; set; }
+            public byte[] Data { get; set; }
 
-            public Sprite(int index, int width, int height, string data)
+            public Sprite(int index, int width, int height, byte[] data)
             {
                 Index = index;
                 Width = width;
@@ -315,7 +315,8 @@ namespace Server
                     Draw();
                     break;
                 case "load sprite":
-                    sprites.Add(new Sprite(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]), parts[3]));
+                    byte[] imageBytes = Convert.FromBase64String(parts[3]);
+                    sprites.Add(new Sprite(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]), imageBytes));
                     break;
                 case "show sprite":
                     ShowSprite(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]));
@@ -625,13 +626,17 @@ namespace Server
             Sprite spriteToDisplay = sprites.FirstOrDefault(sprite => sprite.Index == index);
             if (spriteToDisplay != null)
             {
-                Graphics g = splitContainer1.Panel2.CreateGraphics();
+                byte[] imageBytes = spriteToDisplay.Data;
 
-                Image image = Image.FromFile(spriteToDisplay.Data);
-                g.DrawImage(image, x, y, spriteToDisplay.Width, spriteToDisplay.Height);
+                using (MemoryStream ms = new MemoryStream(imageBytes))
+                {
+                    Image receivedImage = Image.FromStream(ms);
+                    receivedImage = new Bitmap(receivedImage, new Size(spriteToDisplay.Width, spriteToDisplay.Height));
 
-                image.Dispose();
-                g.Dispose();
+                    Graphics g = splitContainer1.Panel2.CreateGraphics();
+                    g.DrawImage(receivedImage, x, y);
+                    g.Dispose();
+                }
             }
             else
             {

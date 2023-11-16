@@ -45,6 +45,29 @@ namespace Client
                 textBoxParams.Text = "";
                 labelError.Text = "";
             }
+            else if (textBoxCommand.Text == "load sprite")
+            {
+                string[] parts = textBoxParams.Text.Split(' ');
+
+                string imagePath = parts[3];
+                Bitmap bitmap = new Bitmap(imagePath);
+                byte[] imageBytes;
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                    imageBytes = stream.ToArray();
+                }
+
+                string command = textBoxCommand.Text;
+                string parameters = $"{parts[0]} {parts[1]} {parts[2]} {Convert.ToBase64String(imageBytes)}";
+                string message = command + "|" + parameters;
+                byte[] data = Encoding.UTF8.GetBytes(message);
+                udpClient.Send(data, data.Length, new IPEndPoint(serverIP, serverPort));
+                textBoxSend.AppendText(command + Environment.NewLine + textBoxParams.Text + Environment.NewLine);
+                textBoxCommand.Text = "";
+                textBoxParams.Text = "";
+                labelError.Text = "";
+            }
             else
             {
                 string command = textBoxCommand.Text;
